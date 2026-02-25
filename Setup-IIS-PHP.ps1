@@ -4,8 +4,8 @@
 .DESCRIPTION
     This script automates the complete setup of IIS with PHP support via FastCGI for a specified domain (e.g., mail.MyDomain.com).
     It checks for administrator privileges, enables required Windows features, installs the necessary Visual C++ Redistributable,
-    downloads and configures PHP, creates an IIS application pool and website, sets up FastCGI handler, and creates a test phpinfo() page.
-    The script is idempotent – safe to run multiple times.
+    downloads and configures PHP, creates an IIS application pool and website, sets up FastCGI handler, configures default documents,
+    and creates a test phpinfo() page. The script is idempotent – safe to run multiple times.
 .PARAMETER SiteName
     IIS site name (default: mail.MyDomain.com).
 .PARAMETER SiteHostName
@@ -25,7 +25,7 @@
     .\Setup-IIS-PHP.ps1 -PhpVersion 8.4.6 -HttpPort 8080
     Installs PHP 8.4.6 and configures the site on port 8080.
 .NOTES
-    Author:  Mikhail Deynekin (https://deynekin.com) / PaulMann (https://github.com/paulmann)
+    Author:  Mikhail Deynekin (https://deynekin.com) / Paul Mann (https://github.com/paulmann)
     Email:   mid1977@gmail.com
     Requires: Administrator privileges, Windows 11/Server 2019+, Internet connection.
     GitHub:  https://github.com/paulmann/IIS-PHP-FastCGI-AutoDeploy
@@ -33,9 +33,9 @@
 
 [CmdletBinding()]
 param(
-    [string]$SiteName       = "MyDomain.com",
-    [string]$SiteHostName   = "MyDomain.com",
-    [string]$SitePath       = "C:\inetpub\mail",
+    [string]$SiteName       = "mail.MyDomain.com",
+    [string]$SiteHostName   = "mail.MyDomain.com",
+    [string]$SitePath       = "C:\inetpub\mydomain",
     [string]$PhpVersion     = "8.5.1",
     [string]$PhpInstallPath = "C:\PHP",
     [int]$HttpPort          = 80
@@ -159,7 +159,7 @@ function Install-Php {
         New-Item -Path $InstallPath -ItemType Directory -Force | Out-Null
     }
     $phpCgi = Join-Path $InstallPath "php-cgi.exe"
-    # Fixed syntax error: removed extra closing parenthesis
+    # Fixed: removed extra closing parenthesis
     if (Test-Path $phpCgi) {
         Write-Host "PHP already present at $InstallPath, skipping download." -ForegroundColor Yellow
         return $phpCgi
@@ -361,6 +361,30 @@ function New-TestPhpFile {
     }
 }
 
+function Set-DefaultDocuments {
+    <#
+    .SYNOPSIS
+        Sets the default documents for the website in order: index.php, index.html, index.htm.
+    #>
+    param(
+        [string]$SiteName,
+        [string[]]$Documents = @("index.php", "index.html", "index.htm")
+    )
+    Write-Host ">>> Setting default documents for site '$SiteName' ..." -ForegroundColor Cyan
+    $filter = "system.webServer/defaultDocument"
+    $pspath = "MACHINE/WEBROOT/APPHOST"
+    $location = $SiteName
+
+    # Enable the default document feature
+    Set-WebConfigurationProperty -Filter $filter -Name enabled -Value $true -PSPath $pspath -Location $location -ErrorAction Stop
+
+    # Replace the entire files collection with the desired documents
+    $docsArray = $Documents | ForEach-Object { @{value = $_} }
+    Set-WebConfiguration -Filter "$filter/files" -PSPath $pspath -Location $location -Value $docsArray -ErrorAction Stop
+
+    Write-Host "Default documents set to: $($Documents -join ', ')"
+}
+
 #endregion
 
 # ---- Main execution ----
@@ -410,9 +434,13 @@ New-OrReplaceWebsite -Name $SiteName -HostHeader $SiteHostName `
 # 10. Add PHP handler for the site
 Add-PhpHandler -SiteName $SiteName -PhpCgiPath $phpCgiPath
 
+# 11. Set default documents (index.php, index.html, index.htm)
+Set-DefaultDocuments -SiteName $SiteName
+
 Write-Host "=========================================================" -ForegroundColor Green
 Write-Host "Setup completed successfully!" -ForegroundColor Green
 Write-Host "Your site is available at: http://$SiteHostName/" -ForegroundColor Yellow
+Write-Host "Default documents set: index.php, index.html, index.htm" -ForegroundColor Yellow
 Write-Host "Test PHP by visiting http://$SiteHostName/ (should show phpinfo)." -ForegroundColor Yellow
 Write-Host "You can now deploy your PHP application (e.g., Roundcube) into $SitePath." -ForegroundColor Yellow
 Write-Host "The installer (if any) will be at http://$SiteHostName/installer/" -ForegroundColor Yellow
