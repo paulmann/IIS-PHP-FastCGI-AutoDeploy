@@ -25,7 +25,7 @@
     .\Setup-IIS-PHP.ps1 -PhpVersion 8.4.6 -HttpPort 8080
     Installs PHP 8.4.6 and configures the site on port 8080.
 .NOTES
-    Author:  Mikhail Deynekin (https://deynekin.com) / Paul Mann (https://github.com/paulmann)
+    Author:  Mikhail Deynekin (https://deynekin.com) / PaulMann (https://github.com/paulmann)
     Email:   mid1977@gmail.com
     Requires: Administrator privileges, Windows 11/Server 2019+, Internet connection.
     GitHub:  https://github.com/paulmann/IIS-PHP-FastCGI-AutoDeploy
@@ -33,8 +33,8 @@
 
 [CmdletBinding()]
 param(
-    [string]$SiteName       = "email.batteryservice.ru",
-    [string]$SiteHostName   = "email.batteryservice.ru",
+    [string]$SiteName       = "MyDomain.com",
+    [string]$SiteHostName   = "MyDomain.com",
     [string]$SitePath       = "C:\inetpub\mail",
     [string]$PhpVersion     = "8.5.1",
     [string]$PhpInstallPath = "C:\PHP",
