@@ -2,7 +2,6 @@
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-7.5+-blue.svg)](https://github.com/PowerShell/PowerShell)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2011%2FServer%202019+-success.svg)](https://www.microsoft.com/windows)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A PowerShell script to **automate the complete setup** of IIS with PHP support via FastCGI on Windows 11 / Server.  
 Perfect for quickly deploying a PHP-based webmail (like Roundcube) or any PHP website with a custom domain.
